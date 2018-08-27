@@ -1,0 +1,55 @@
+# np.broadcasting
+
+columns = df_duration_reference.astype(int).values
+rows = np.repeat(np.arange(len(df_duration),dtype=np.intp)[:, np.newaxis], n_years*12, axis = 1)
+df_rates_mapped = pd.DataFrame(df_rates.values[rows, columns]).astype(float)/100
+df_rates_mapped.columns = ['{}-{}'.format((valuation_date + relativedelta(months = i)).year,
+                                (valuation_date + relativedelta(months = i)).month) for i in df_rates_mapped.columns]
+
+_______________________
+# dashboard
+
+import os
+from ipywidgets import widgets, HBox, Label
+import traitlets
+from IPython.display import clear_output, display, HTML
+import shutil
+
+def hide_code():
+    return HTML('''<script>
+    code_show=true; 
+    function code_toggle() {
+     if (code_show){
+     $("div.input").hide();
+     } else {
+     $("div.input").show();
+     }
+     code_show = !code_show
+    } 
+    $( document ).ready(code_toggle);
+    </script>
+    <a href="javascript:code_toggle()">Toggle Code</a>.''')
+
+list_folders = os.listdir('data')
+folder_dropdown = widgets.Dropdown(options=list_folders)
+display(HBox([Label('Select data folder'),folder_dropdown]))
+
+def transform_subfolder(selected_folder):
+    new_path = os.path.join('data',selected_folder)
+    list_subfolders = os.listdir(new_path)
+    return list_subfolders
+
+new_path = os.path.join('data',folder_dropdown.value)
+list_subfolders = os.listdir(new_path)
+
+subfolder_dropdown = widgets.Dropdown(options=list_folders)
+d = traitlets.directional_link((folder_dropdown, 'value'), (subfolder_dropdown, 'options'), transform_subfolder)
+
+display(HBox([Label('Select data subfolder'),subfolder_dropdown]))
+
+
+_____________________
+
+# groupby cols
+
+df_rates_grouped = df_rates.groupby([int(x.split('-')[0]) for x in df_rates.columns], axis = 1).sum()
